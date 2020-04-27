@@ -10,7 +10,14 @@
       You are logged in to the Texas Wholesale Distributor Database Reporting website.  Please upload files in the ARCOS format.
   <form action="uploadfile.php" method="post" enctype="multipart/form-data">
      <input type="file" name="file" />
-     <input type="submit" value="Upload!">
+     <input type="submit" name = "upload" value="Upload!">
+     <p>
+     If you do not have sale, please input the following information. <br />
+     <p>
+     Registrant Number: <input type="text" name="num" /><br />
+     Transaction Date: <input type="text" name="date" /><br />
+     No Sale? <input type="checkbox" name="sale" value = "sale"/>
+     <input type="submit" name = "submit" value="Submit!">
   </form>
 </body>
 </html>
