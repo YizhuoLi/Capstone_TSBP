@@ -38,7 +38,8 @@
         "socialiteproviders/instagram": "^3.0",
         "socialiteproviders/linkedin": "^3.1",
         "socialiteproviders/twitch": "^5.1",
-        "socialiteproviders/youtube": "^3.0"
+        "socialiteproviders/youtube": "^3.0",
+        "phpexcel/phpexcel": "dev-master"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.2",

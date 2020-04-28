@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use DB;
 
 class UploadController extends Controller
 {
@@ -92,7 +93,49 @@ class UploadController extends Controller
         $bool = Storage::disk('uploadsRightFromat')->put($filename, file_get_contents($realPath));
         //判断是否上传成功
         if ($bool) {
-            echo '<script>alert("Uploaded File Success!")</script>';
+            $fn = fopen(public_path('succeed_files/'.date('Ymd').'/'.$filename), "r");
+            $lNum = 0;
+            $insertNumber = 0;
+            while(! feof($fn)) {
+                $lNum++;
+                $trueResult = fgets($fn);
+                $result = trim($trueResult);
+                $len = strlen($trueResult);
+
+                if ($lNum != 1) {
+                    $Reporting_Registrant_Number = substr($trueResult, 0, 9);
+                    $Transaction_Code = substr($trueResult, 9, 1);
+                    $ActionIndicator = substr($trueResult, 10, 1);
+                    $National_Drug_Code = substr($trueResult, 11, 11);
+                    $Quantity = substr($trueResult, 22, 8);
+                    $Unit = substr($trueResult, 30, 1);
+                    $Associate_Registrant_Number = substr($trueResult, 31, 9);
+                    $DEA_Number = substr($trueResult, 40, 9);
+                    $Transaction_Date = substr($trueResult, 49, 8);
+                    $Correction_Number = substr($trueResult, 57, 8);
+                    $Strength = substr($trueResult, 65, 4);
+                    $Transaction_Identifier = substr($trueResult, 69, 10);
+
+
+                    $insert_bool = DB::table('arcos')->insert([
+                        'Reporting_Registrant_Number' => $Reporting_Registrant_Number,
+                        'Transaction_Code' => $Transaction_Code,
+                        'ActionIndicator' => $ActionIndicator,
+                        'National_Drug_Code' => $National_Drug_Code,
+                        'Quantity' => $Quantity,
+                        'Unit' => $Unit,
+                        'Associate_Registrant_Number' => $Associate_Registrant_Number,
+                        'DEA_Number' => $DEA_Number,
+                        'Transaction_Date' => $Transaction_Date,
+                        'Correction_Number' => $Correction_Number,
+                        'Strength' => $Strength,
+                        'Transaction_Identifier' => $Transaction_Identifier,]);
+                    if ($insert_bool) {
+                        $insertNumber++;
+                    }
+                }
+            }
+            echo '<script> alert("success upload the file and '.$insertNumber.' records has been insert")</script>';
         } else {
             echo '<script>alert("Uploaded Failed!")</script>';
         }
@@ -115,6 +158,10 @@ class UploadController extends Controller
         if (!$bool) {
             echo 'fail';
         }
+    }
+
+    public function insert() {
+
     }
 
 }
