@@ -1,7 +1,9 @@
 <?php
 error_reporting(0);
 require_once "Classes/PHPExcel.php";
+$filePath  = array();
 
+//change null to " " in an array
 function nulltostr($arr){
     if($arr !== null){
         if(is_array($arr)){
@@ -18,10 +20,10 @@ function nulltostr($arr){
             if($arr === null){ $arr = ' '; }
         }
     }else{ $arr = ' '; }
-//    $arr = preg_replace('/\s(?=)/', '', $arr);
     return $arr;
 }
 
+//change null to 0 in an array
 function nulltoo($arr){
     if($arr !== null){
         if(is_array($arr)){
@@ -38,10 +40,10 @@ function nulltoo($arr){
             if($arr === null){ $arr = '0'; }
         }
     }else{ $arr = '0'; }
-//    $arr = preg_replace('/\s(?=)/', '', $arr);
     return $arr;
 }
 
+//change " " to 0 in an array
 function strtoo($arr){
     if($arr !== " "){
         if(is_array($arr)){
@@ -58,11 +60,10 @@ function strtoo($arr){
             if($arr === " "){ $arr = '0'; }
         }
     }else{ $arr = '0'; }
-//    $arr = preg_replace('/\s(?=)/', '', $arr);
     return $arr;
 }
 
-$filePath  = array();
+//find file path for all files in one dictionary
 function traverse($path = '.'){
     global $filePath;
     $current_dir = opendir($path);
@@ -116,7 +117,7 @@ foreach ($array as $key => $fullpath) {
         $fullpath = str_replace('.xls', '.xlsx', $fullpath);
         $fullpath = str_replace('.xlsxx', '.xlsx', $fullpath);
         $fullpath = str_replace('.xlsx', ".txt", $fullpath);
-//        echo $fullpath . "<br/>";
+
         $myfile = fopen($fullpath, "w") or die("Unable to open file!");
         fwrite($myfile, $str);
 
@@ -194,5 +195,4 @@ foreach ($array as $key => $fullpath) {
         fclose($myfile);
     }
 }
-
 ?>
