@@ -80,6 +80,7 @@ function traverse($path = '.'){
     return $filePath;
 }
 
+// File path may need to change accordingly
 $array = traverse("./succeed_files/");
 
 foreach ($array as $key => $fullpath) {
