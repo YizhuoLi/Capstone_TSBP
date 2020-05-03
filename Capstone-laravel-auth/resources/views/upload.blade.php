@@ -25,9 +25,28 @@
 <!--                    <button type="submit" class="btn btn-primary">-->
 <!--                        <i class="fa fa-btn fa-sign-in"></i> upload-->
 <!--                    </button>-->
-                    <input type="submit" value="Upload" />
+                    <input type="submit" name = "upload" value="Upload" />
                 </div>
             </div>
+
+            <div class="form-group">
+                <label for="file" class="col-md-4 control-label">
+                    If you do not have sale, please input the following information.
+                </label>
+
+                <div class="col-md-6">
+                  Registrant Number: <input type="text" name="num" /><br />
+                  Transaction Date: <input type="text" name="date" /><br />
+                  No Sale? <input id = "sale" type="checkbox" name="sale" value = "sale"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-md-6 col-md-offset-4">
+                    <input type="submit" name = "submit" value="Submit" />
+                </div>
+            </div>
+
         </form>
     </div>
 </div>
