@@ -77,7 +77,7 @@ return [
             'endpoint' => env('AWS_URL'),
         ],
 
-        //自定义
+        //self-define
         'uploads' => [
             'driver' => 'local',
             //'root' => storage_path('app/uploads'),

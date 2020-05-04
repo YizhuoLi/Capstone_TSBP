@@ -52,10 +52,11 @@
 </div>
 
 <script>
+    // not in use, but will put here for future use.
     function startUploading(){
         var isEmpty = document.getElementById('file');
         if(isEmpty.value.length == 0){
-            alert("请选择文件");
+            alert("Please choose file");
             return false;
         }else{
             return true;
@@ -67,16 +68,16 @@
         fileSize = target.files[0].size;
         var size = fileSize / 1024;
         if (size > 1000) {
-            alert("附件不能大于1M");
+            alert("should smaller than 1M");
             target.value = "";
-            return false;   //阻止submit提交
+            return false;   //block submit
         }
         var name = target.value;
         var fileName = name.substring(name.lastIndexOf(".") + 1).toLowerCase();
         if (fileName != "jpg" && fileName != "jpeg" && fileName != "pdf" && fileName != "png" && fileName != "dwg" && fileName != "gif" && fileName != "xls" && fileName != "xlsx" && fileName != "word" && fileName != "doc" && fileName != "docx" && fileName != "txt") {
-            alert("请选择图片格式文件上传(jpg,png,gif,dwg,pdf,gif等)！");
+            alert("choose picture please(jpg,png,gif,dwg,pdf,gif等)！");
             target.value = "";
-            return false;   //阻止submit提交
+            return false;   //block submit
         }
     }
 </script>

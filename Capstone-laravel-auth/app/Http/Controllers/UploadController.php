@@ -5,46 +5,48 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use DB;
 //use PhpOffice\PhpSpreadsheet\Spreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+//use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class UploadController extends Controller
 {
-    const PUBLIC_UPLOADS = './public/uploads/';
     /**
      * Show the application dashboard.
      *
      * @return \Illuminate\Http\Response
      */
-    //上传文件 功能实现方法
+    //Called function in router. test the file type, upload and insert into database
     public function upload(Request $request)
     {
         if ($request->isMethod('POST')) {
             if(isset($_POST['upload'])){
               $file = $request->file('source');
-              //判断文件是否上传成功
+              //check whether upload successfully
               if ($file->isValid()) {
-                  //原文件名
+                  //original file name
                   //$originalName = $file->getClientOriginalName();
-                  //文件后缀
+                  //use suffix to filter files
                   $txtfile = array('txt');
                   $excelfile = array('xls', 'xlsx');
-                  //扩展名
+                  //extension of the file
                   $ext = $file->getClientOriginalExtension();
                   //MimeType
                   //$type = $file->getClientMimeType();
-                  //是否是要求的文件
+                  //check what type of file is
                   $isTxtFile = in_array($ext, $txtfile);
                   $isExcelFile = in_array($ext, $excelfile);
                   $realPath = $file->getRealPath();
                   if ($isTxtFile) {
                       $this->saveFiles_1($realPath, $ext);
                   } elseif ($isExcelFile){
+                      # check whether the excel file is in right format and save/insert
                       $this->whetherRightExcelFile($realPath, $ext);
                   } else {
+                      # if the file is not excel or txt, return error
                       echo '<script>alert("Wrong Format!")</script>';
                   }
               }
             }
+            # if the user submit a no-sale record
             elseif(isset($_POST['submit'])){
                 $Reporting_Registrant_Number = $_POST['num'];
                 $Transaction_Date = $_POST['date'];
@@ -52,6 +54,7 @@ class UploadController extends Controller
                     echo '<script>alert("If there is no sale, please input your information!")</script>';
                 }
                 elseif(isset($_POST['sale'])== 'sale'){
+                    # if the information if contained, insert into database
                     DB::table('arcos')->insert([
                         'Reporting_Registrant_Number' => $Reporting_Registrant_Number,
                         'Transaction_Date' => $Transaction_Date,]);
@@ -64,16 +67,19 @@ class UploadController extends Controller
         return view('upload');
     }
 
+    // check whether the uploaded excel format file are in right format and if right, save the file and insert the data in to database
     public function whetherRightExcelFile($realPath, $ext){
         //$realPath = $file->getRealPath();
         $filename = date('Y-m-d-h-i-s') . '-' . uniqid() . '.' . $ext;
         $this->originalUploads($filename, $realPath);
+        # change $ext to PhpSpreadsheet format
         if($ext == 'xlsx'){
             $ext = 'Xlsx';
         }else{
             $ext = 'Xls';
         }
 
+        //since the PHPExcel is stopped maintenance, so we have to change to PhpSpreadsheet here
         //$excelReader = PHPExcel_IOFactory::createReaderForFile($realPath);
         // Create a new Reader of the type that has been identified
         $excelReader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($ext);
@@ -96,23 +102,27 @@ class UploadController extends Controller
         if($array["A2"] && $array["M2"] && $array["X2"] && $array["Q4"] && $array["A8"] && $array["C8"] && $array["U8"] &&
             $array["AD8"] && $array["AY8"] && $array["BG8"]) {
             //        echo "success";
+            // if pass the previous check, the uploaded file are in right ARCOS excel format, so we change the excel to txt
             $fullpath = $this->excelToTxt($excelReader, $excelObj, $realPath);
+            // After change the excel file to txt file, we save the file and insert the data into database.
             $this->saveFiles_1($fullpath, 'txt');
             //echo '<script>alert("Uploaded File Success!")</script>';
         }
-        else{
+        else{ // if the uploaded excel file not passed the previous check, return wrong format
             $this->wrongFormat($filename, $realPath);
             //echo '<script>alert("Uploaded File Failed!")</script>';
         }
     }
 
+    // save the txt file and if the txt format is right, insert the data into database. else, save the file into failed folder.
     public function saveFiles_1($realPath, $ext){
-        //临时绝对路径
+        //$realPath here is the temporary path for the uploaded file
         //$realPath = $file->getRealPath();
         $filename = date('Y-m-d-h-i-s') . '-' . uniqid() . '.' . $ext;
         $this->originalUploads($filename, $realPath);
         $fn = fopen(public_path('uploads/'.date('Ymd').'/'.$filename), "r");
 
+        // since the first line is header, we will skip that.
         $lNum = 0;
         while(! feof($fn))  {
             $lNum ++;
@@ -120,6 +130,7 @@ class UploadController extends Controller
             $result = trim($result);
             $len = strlen($result);
 
+            // extract the required fileds
             $Reporting_Registrant_Number = substr($result, 0, 9);
             $Transaction_Code = substr($result, 9, 1);
             $ActionIndicator = substr($result, 10, 1);
@@ -133,10 +144,11 @@ class UploadController extends Controller
             $Strength = substr($result, 65, 4);
             $Transaction_Identifier = substr($result, 69, 10);
 
+            // this is a unique situation, if the user submit a no-sale txt file, we will run rightFormat function
             if($lNum == 2 && $Transaction_Code == "7"){
               $this->rightFormat($filename, $realPath);
               return;
-            }else{
+            }else{ // check whether the txt file are in ARCOS format. If not, run wrongFromat function.
               if($lNum != 1 ){
                   if($len != 79 && $len != 0){
                       $this->wrongFormat($filename, $realPath);
@@ -160,9 +172,11 @@ class UploadController extends Controller
           }
         }
 
+        // if the txt file passed the previous check, save the file in successed_files and run insertAll
         $bool = Storage::disk('uploadsRightFromat')->put($filename, file_get_contents($realPath));
-        //判断是否上传成功
+        // check whether Storage success.
         if ($bool) {
+            // if storage successed, insert the data into database.
             $insertNumber = $this->insertAll($filename);
             echo '<script> alert("success upload the file and '.$insertNumber.' records has been insert")</script>';
         } else {
@@ -171,9 +185,10 @@ class UploadController extends Controller
 
     }
 
+    // this function is for no-sale txt file submit
     public function rightFormat($filename, $realPath){
         $bool = Storage::disk('uploadsRightFromat')->put($filename, file_get_contents($realPath));
-        //判断是否上传成功
+        // check whether Storage success.
         if ($bool) {
             $fn = fopen(public_path('succeed_files/'.date('Ymd').'/'.$filename), "r");
             $lNum = 0;
@@ -197,9 +212,11 @@ class UploadController extends Controller
         }
     }
 
+    // if the txt file are in wrong format, we will storage the file into failed_files folder.
+    // So, the worker can check this folder manually in the future.
     public function wrongFormat($filename, $realPath){
         $bool = Storage::disk('uploadsWrongFromat')->put($filename, file_get_contents($realPath));
-        //判断是否上传成功
+        // check whether Storage success.
         if ($bool) {
             echo '<script>alert("Thanks for uploading your report. Workers will check the file later!")</script>';
         } else {
@@ -207,14 +224,16 @@ class UploadController extends Controller
         }
     }
 
+    // no matter the txt file are in right or wrong format, we will storage the file into uploads folder
     public function originalUploads($filename, $realPath){
         $bool = Storage::disk('uploads')->put($filename, file_get_contents($realPath));
-        //判断是否上传成功
+        // check whether Storage success.
         if (!$bool) {
             echo 'fail';
         }
     }
 
+    // in the txt file are in right format, we will insert the data into database
     public function insertAll($filename){
         $fn = fopen(public_path('succeed_files/'.date('Ymd').'/'.$filename), "r");
         $lNum = 0;
@@ -225,7 +244,9 @@ class UploadController extends Controller
             $trueResult = trim($trueResult);
 //                $len = strlen($trueResult);
 
+            // skip the first line
             if ($lNum != 1) {
+                // extract the required fileds
                 $Reporting_Registrant_Number = substr($trueResult, 0, 9);
                 $Transaction_Code = substr($trueResult, 9, 1);
                 $ActionIndicator = substr($trueResult, 10, 1);
@@ -239,7 +260,8 @@ class UploadController extends Controller
                 $Strength = substr($trueResult, 65, 4);
                 $Transaction_Identifier = substr($trueResult, 69, 10);
 
-
+                // insert into database Laravel-Auth and tale 'arcos'
+                // table 'arcos' are created by database/migrations/2020_create_arcos_table.php
                 $insert_bool = DB::table('arcos')->insert([
                     'Reporting_Registrant_Number' => $Reporting_Registrant_Number,
                     'Transaction_Code' => $Transaction_Code,
@@ -254,13 +276,15 @@ class UploadController extends Controller
                     'Strength' => $Strength,
                     'Transaction_Identifier' => $Transaction_Identifier,]);
                 if ($insert_bool) {
-                    $insertNumber++;
+                    $insertNumber++; // insert records numbers
                 }
             }
         }
         return $insertNumber;
     }
 
+
+    //nulltostr, nulltoo and strtoo are the assistant functions for the excelToTxt function
     //change null to " " in an array
     function nulltostr($arr){
         if($arr !== null){
@@ -321,6 +345,7 @@ class UploadController extends Controller
         return $arr;
     }
 
+    // change eccel file to txt
     function excelToTxt($objReader, $objPHPExcel, $fullpath){
 
         $objReader->setReadDataOnly(TRUE);
@@ -429,7 +454,7 @@ class UploadController extends Controller
             fwrite($myfile, $sl);
         }
         fclose($myfile);
-        return $fullpath;
+        return $fullpath; // return the file path and the file has been changed to txt format and ready for future use
     }
 
 
